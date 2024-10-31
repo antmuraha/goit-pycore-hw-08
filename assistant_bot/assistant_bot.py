@@ -1,6 +1,32 @@
+from enum import Enum
 from address_book import AddressBook
 from record import Record
 from entities import FieldNameValueError, FieldBirthdayValueError, FieldPhoneValueError
+from store import load_data, save_data
+
+
+class BOT_COMMANDS(Enum):
+    ADD_CONTACT = "cmd_add_contact"
+    CMD_CHANGE_CONTACT = "cmd_change_contact"
+    CMD_PHONE = "cmd_phone"
+    CMD_ADD_BIRTHDAY = "cmd_add_birthday"
+    CMD_SHOW_BIRTHDAY = "cmd_show_birthday"
+    CMD_ALL = "cmd_all"
+
+
+class CMD_TEMPLATES(Enum):
+    cmd_add_contact = "add [username] [phone]"
+    cmd_add_contact_desc = "The add contact."
+    cmd_change_contact = "change [username] [phone] [new phone]"
+    cmd_change_contact_desc = "The change contact."
+    cmd_phone = "phone [username]"
+    cmd_phone_desc = "To change phone for contact"
+    cmd_add_birthday = "add-birthday [username] [birthday]"
+    cmd_add_birthday_desc = "Adding a birthday for contact"
+    cmd_show_birthday = "show-birthday [username]"
+    cmd_show_birthday_desc = "Show birthday for contact"
+    cmd_all = "all"
+    cmd_all_desc = "Show all contacts"
 
 
 def parse_input(user_input):
@@ -9,15 +35,18 @@ def parse_input(user_input):
     return cmd, *args
 
 
+def get_enter_command_message(cmd: str):
+    return f"Please enter command in the format: {CMD_TEMPLATES[cmd].value}"
+
+
 def input_error(func):
     def validate(*args):
         params = args[0]
         contacts = args[1]
         func_name = func.__name__
-
-        if func_name == "cmd_add_contact":
+        if func_name == BOT_COMMANDS.ADD_CONTACT.value:
             if len(params) == 0:
-                msg = "Please enter command in the format: add [username] [phone]"
+                msg = get_enter_command_message(func_name)
                 complete = False
                 return (msg, complete)
 
@@ -26,9 +55,9 @@ def input_error(func):
                 complete = False
                 return (msg, complete)
 
-        if func_name == "cmd_change_contact":
+        if func_name == BOT_COMMANDS.CMD_CHANGE_CONTACT.value:
             if len(params) == 0:
-                msg = "Please enter command in the format: change [username] [phone] [new phone]"
+                msg = get_enter_command_message(func_name)
                 complete = False
                 return (msg, complete)
 
@@ -48,9 +77,9 @@ def input_error(func):
                 complete = False
                 return (msg, complete)
 
-        if func_name == "cmd_phone":
+        if func_name == BOT_COMMANDS.CMD_PHONE.value:
             if len(params) == 0:
-                msg = "Please enter command in the format: phone [username]"
+                msg = get_enter_command_message(func_name)
                 complete = False
                 return (msg, complete)
 
@@ -61,9 +90,9 @@ def input_error(func):
                 complete = False
                 return (msg, complete)
 
-        if func_name == "cmd_add_birthday":
+        if func_name == BOT_COMMANDS.CMD_ADD_BIRTHDAY.value:
             if len(params) == 0:
-                msg = "Please enter command in the format: add-birthday [username] [birthday]"
+                msg = get_enter_command_message(func_name)
                 complete = False
                 return (msg, complete)
             if len(params) == 1:
@@ -71,13 +100,13 @@ def input_error(func):
                 complete = False
                 return (msg, complete)
 
-        if func_name == "cmd_show_birthday":
+        if func_name == BOT_COMMANDS.CMD_SHOW_BIRTHDAY.value:
             if len(params) == 0:
-                msg = "Please enter command in the format: show-birthday [username]"
+                msg = get_enter_command_message(func_name)
                 complete = False
                 return (msg, complete)
 
-        if func_name == "cmd_all":
+        if func_name == BOT_COMMANDS.CMD_ALL.value:
             if len(contacts) == 0:
                 msg = "Contacts list is empty"
                 complete = False
@@ -195,15 +224,15 @@ def cmd_all(args, contacts):
 
 COMMANDS = {
     "hello": cmd_hello,
-    "close": cmd_exit,
-    "exit": cmd_exit,
     "add": cmd_add_contact,
     "change": cmd_change_contact,
     "phone": cmd_phone,
     "add-birthday": cmd_add_birthday,
     "show-birthday": cmd_show_birthday,
     "birthdays": cmd_birthdays,
-    "all": cmd_all
+    "all": cmd_all,
+    "close": cmd_exit,
+    "exit": cmd_exit,
 }
 
 
@@ -213,7 +242,7 @@ def bot(callback, args: list[str], contacts: AddressBook):
 
 
 def main():
-    contacts = AddressBook()
+    contacts = load_data()
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
@@ -229,6 +258,7 @@ def main():
                 if msg:
                     print(msg)
                 if complete:
+                    save_data(contacts)
                     exit(0)
             else:
                 print("Invalid command.")

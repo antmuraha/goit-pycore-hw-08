@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive UML Diagram</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .node rect {
+      fill: #8FAADC;
+      stroke: #333;
+      stroke-width: 2px;
+    }
+    .node text {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      fill: #333;
+    }
+    .link {
+      fill: none;
+      stroke: #666;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+<svg width="800" height="600" id="umlCanvas"></svg>
+
+<script>
+  const nodes = [
+    { id: 'input_validation', label: 'InputValidation', x: 100, y: 100 },
+    { id: 'CommandBase', label: 'CommandBase', x: 300, y: 100 },
+    { id: 'CommandTarget', label: 'CommandTarget', x: 500, y: 100 },
+    { id: 'BookAddresses', label: 'BookAddresses', x: 300, y: 250 },
+    { id: 'RecordAddress', label: 'RecordAddress', x: 500, y: 250 },
+    { id: 'BookNotes', label: 'BookNotes', x: 300, y: 400 },
+    { id: 'RecordNote', label: 'RecordNote', x: 500, y: 400 },
+    { id: 'FieldTarget', label: 'FieldTarget', x: 300, y: 550 },
+    { id: 'Field', label: 'Field', x: 500, y: 550 },
+  ];
+
+  const links = [
+    { source: 'input_validation', target: 'FieldTarget' },
+    { source: 'CommandTarget', target: 'CommandBase' },
+    { source: 'BookAddresses', target: 'RecordAddress' },
+    { source: 'BookNotes', target: 'RecordNote' },
+    { source: 'FieldTarget', target: 'Field' },
+  ];
+
+  const svg = d3.select('#umlCanvas');
+  const link = svg.selectAll('.link')
+    .data(links)
+    .enter()
+    .append('line')
+    .attr('class', 'link')
+    .attr('x1', d => nodes.find(n => n.id === d.source).x)
+    .attr('y1', d => nodes.find(n => n.id === d.source).y)
+    .attr('x2', d => nodes.find(n => n.id === d.target).x)
+    .attr('y2', d => nodes.find(n => n.id === d.target).y);
+
+  const node = svg.selectAll('.node')
+    .data(nodes)
+    .enter()
+    .append('g')
+    .attr('class', 'node')
+    .attr('transform', d => `translate(${d.x},${d.y})`)
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended));
+
+  node.append('rect')
+    .attr('width', 120)
+    .attr('height', 40)
+    .attr('rx', 10)
+    .attr('ry', 10);
+
+  node.append('text')
+    .attr('dx', 60)
+    .attr('dy', 25)
+    .attr('text-anchor', 'middle')
+    .text(d => d.label);
+
+  node.on('mouseover', function(event, d) {
+    d3.select(this).select('rect').style('fill', '#FFD700');
+    const info = d.label + ' class information';
+    console.log(info);
+  }).on('mouseout', function() {
+    d3.select(this).select('rect').style('fill', '#8FAADC');
+  });
+
+  function dragstarted(event, d) {
+    d3.select(this).raise().attr('stroke', 'black');
+  }
+
+  function dragged(event, d) {
+    d.x = event.x;
+    d.y = event.y;
+    d3.select(this).attr('transform', `translate(${d.x},${d.y})`);
+    link.filter(l => l.source === d.id || l.target === d.id)
+      .attr('x1', l => nodes.find(n => n.id === l.source).x)
+      .attr('y1', l => nodes.find(n => n.id === l.source).y)
+      .attr('x2', l => nodes.find(n => n.id === l.target).x)
+      .attr('y2', l => nodes.find(n => n.id === l.target).y);
+  }
+
+  function dragended(event, d) {
+    d3.select(this).attr('stroke', null);
+  }
+</script>
+</body>
+</html>
